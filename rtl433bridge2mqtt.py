@@ -11,7 +11,7 @@ MQTT_TOPIC_PREFIX = "rtl_433"
 
 # Logging Setup
 logging.basicConfig(
-    filename="rtl433_unknown.log",
+    filename="/home/admin/logs/rtl433_unknown.log",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
