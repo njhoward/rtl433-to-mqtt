@@ -1,28 +1,20 @@
+# rtl433bridge2mqtt.py
 import subprocess
 import json
-import paho.mqtt.client as mqtt
+from config import MQTT_BROKER, MQTT_PORT, KNOWN_MODELS
 import logging
 from datetime import datetime
+from config import SERIAL_PORT, BAUD_RATE, SERIAL_TIMEOUT
+from logger import setup_logging
 
 # MQTT Setup
-MQTT_BROKER = "localhost"
-MQTT_PORT = 1883
 MQTT_TOPIC_PREFIX = "rtl_433"
 
-# Logging Setup
-logging.basicConfig(
-    filename="/home/admin/logs/rtl433_unknown.log",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-console_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-logger.addHandler(console_handler)
+#logging setup
+setup_logging
+suspicious_logger = logging.getLogger("suspicious")
 
-# Known models to process
-KNOWN_MODELS = ["Prologue-TH", "AmbientWeather-WH31E"]
+
 
 # Start rtl_433 subprocess
 rtl433_proc = subprocess.Popen(
@@ -38,7 +30,7 @@ mqtt_client = mqtt.Client()
 mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
 mqtt_client.loop_start()
 
-logger.info("Listening to rtl_433...")
+logging.info("Listening to rtl_433...")
 
 try:
     for line in rtl433_proc.stdout:
@@ -54,16 +46,16 @@ try:
             if model in KNOWN_MODELS and device_id:
                 topic = f"{MQTT_TOPIC_PREFIX}/{model}/{device_id}"
                 mqtt_client.publish(topic, json.dumps(data))
-                logger.info(f"Published to {topic}: {data}")
+                logging.info(f"Published to {topic}: {data}")
             else:
-                logger.info(f"Unknown or unhandled model: {line}")
+                suspicious_logger.info(f"Unknown or unhandled model: {line}")
 
         except json.JSONDecodeError:
-            logger.warning(f"Failed to decode JSON: {line}")
+            logging.warning(f"Failed to decode JSON: {line}")
             continue
 
 except KeyboardInterrupt:
-    logger.info("Keyboard interrupt received. Exiting...")
+    logging.info("Keyboard interrupt received. Exiting...")
 
 finally:
     mqtt_client.loop_stop()
