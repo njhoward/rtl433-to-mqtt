@@ -4,7 +4,6 @@ import json
 from config import MQTT_BROKER, MQTT_PORT, KNOWN_MODELS
 import logging
 from datetime import datetime
-from config import SERIAL_PORT, BAUD_RATE, SERIAL_TIMEOUT
 from logger import setup_logging
 
 # MQTT Setup
