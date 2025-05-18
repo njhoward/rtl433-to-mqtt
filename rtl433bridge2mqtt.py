@@ -1,6 +1,7 @@
 # rtl433bridge2mqtt.py
 import subprocess
 import json
+import paho.mqtt.client as mqtt
 from config import MQTT_BROKER, MQTT_PORT, KNOWN_MODELS
 import logging
 from datetime import datetime
