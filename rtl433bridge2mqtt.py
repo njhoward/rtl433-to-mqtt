@@ -13,10 +13,15 @@ MQTT_TOPIC_PREFIX = "rtl_433"
 logging.basicConfig(
     filename="rtl433_unknown.log",
     level=logging.INFO,
-    format="%(asctime)s - %(message)s"
+    format="%(asctime)s - %(levelname)s - %(message)s"
 )
+logger = logging.getLogger(__name__)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+logger.addHandler(console_handler)
 
-# Known models you want to process
+# Known models to process
 KNOWN_MODELS = ["Prologue-TH", "AmbientWeather-WH31E"]
 
 # Start rtl_433 subprocess
@@ -33,7 +38,7 @@ mqtt_client = mqtt.Client()
 mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
 mqtt_client.loop_start()
 
-print("Listening to rtl_433...")
+logger.info("Listening to rtl_433...")
 
 try:
     for line in rtl433_proc.stdout:
@@ -49,19 +54,19 @@ try:
             if model in KNOWN_MODELS and device_id:
                 topic = f"{MQTT_TOPIC_PREFIX}/{model}/{device_id}"
                 mqtt_client.publish(topic, json.dumps(data))
-                print(f"Published to {topic}: {data}")
+                logger.info(f"Published to {topic}: {data}")
             else:
-                # Unknown or unexpected model
-                logging.info(line)
-                print(f"Logged unknown: {line}")
+                logger.info(f"Unknown or unhandled model: {line}")
 
         except json.JSONDecodeError:
-            continue  # ignore bad JSON lines
+            logger.warning(f"Failed to decode JSON: {line}")
+            continue
 
 except KeyboardInterrupt:
-    print("\nExiting...")
+    logger.info("Keyboard interrupt received. Exiting...")
 
 finally:
     mqtt_client.loop_stop()
     mqtt_client.disconnect()
     rtl433_proc.terminate()
+    logger.info("Cleaned up and terminated subprocess.")
