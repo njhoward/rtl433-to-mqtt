@@ -26,11 +26,14 @@ rtl433_proc = subprocess.Popen(
 )
 
 # MQTT Connect
-mqtt_client = mqtt.Client()
-mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
-mqtt_client.loop_start()
+try:
+    mqtt_client = mqtt.Client()
+    mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
+    mqtt_client.loop_start()
+    logging.info("[Main] Listening to rtl_433...")
+except Exception as e:
+    logging.exception(f"[Main] MQTT connection failed: {e}")
 
-logging.info("Listening to rtl_433...")
 
 try:
     for line in rtl433_proc.stdout:
@@ -46,19 +49,19 @@ try:
             if model in KNOWN_MODELS and device_id:
                 topic = f"{MQTT_TOPIC_PREFIX}/{model}/{device_id}"
                 mqtt_client.publish(topic, json.dumps(data))
-                logging.info(f"Published to {topic}: {data}")
+                logging.info(f"[Main] Published to {topic}: {data}")
             else:
-                suspicious_logger.info(f"Unknown or unhandled model: {line}")
+                suspicious_logger.info(f"[Main] Unknown or unhandled model: {line}")
 
         except json.JSONDecodeError:
-            logging.warning(f"Failed to decode JSON: {line}")
+            logging.warning(f"[Main] Failed to decode JSON: {line}")
             continue
 
 except KeyboardInterrupt:
-    logging.info("Keyboard interrupt received. Exiting...")
+    logging.info("[Main] Keyboard interrupt received. Exiting...")
 
 finally:
     mqtt_client.loop_stop()
     mqtt_client.disconnect()
     rtl433_proc.terminate()
-    logger.info("Cleaned up and terminated subprocess.")
+    logging.info("[Main] Cleaned up and terminated subprocess.")
