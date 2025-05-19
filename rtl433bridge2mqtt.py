@@ -6,6 +6,8 @@ from config import MQTT_BROKER, MQTT_PORT, KNOWN_MODELS
 import logging
 from datetime import datetime
 from logger import setup_logging
+from influxhandler import log_reading
+
 
 # MQTT Setup
 MQTT_TOPIC_PREFIX = "rtl_433"
@@ -49,6 +51,7 @@ try:
             if model in KNOWN_MODELS and device_id:
                 topic = f"{MQTT_TOPIC_PREFIX}/{model}/{device_id}"
                 mqtt_client.publish(topic, json.dumps(data))
+                log_reading(data)
                 logging.info(f"[Main] Published to {topic}: {data}")
             else:
                 suspicious_logger.info(f"[Main] Unknown or unhandled model: {line}")
