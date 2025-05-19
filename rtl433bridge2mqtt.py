@@ -11,7 +11,7 @@ from logger import setup_logging
 MQTT_TOPIC_PREFIX = "rtl_433"
 
 #logging setup
-setup_logging
+setup_logging()
 suspicious_logger = logging.getLogger("suspicious")
 
 
