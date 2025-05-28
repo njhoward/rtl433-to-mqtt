@@ -34,6 +34,6 @@ def log_reading(data):
             }
         }]
         influx_client.write_points(influx_payload)
-        logger.debug(f"[Influx] Wrote WN31: {influx_payload}")
+        logger.debug(f"[Influx] Wrote: {influx_payload}")
     except Exception as e:
-        logger.exception("[Influx] Failed to write WN31 reading")
+        logger.exception("[Influx] Failed to write reading")
