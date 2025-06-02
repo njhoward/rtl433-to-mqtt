@@ -2,7 +2,7 @@
 import subprocess
 import json
 import paho.mqtt.client as mqtt
-from config import MQTT_BROKER, MQTT_PORT, KNOWN_MODELS
+from config import MQTT_BROKER, MQTT_PORT, KNOWN_MODELS, EXCLUDED_MODELS
 import logging
 from datetime import datetime
 from logger import setup_logging
@@ -39,9 +39,11 @@ except Exception as e:
 
 try:
     for line in rtl433_proc.stdout:
+        raw_line = line
         line = line.strip()
         if not line.startswith("{"):
-            continue  # skip non-JSON lines
+            suspicious_logger.info(f"[Main] Non-JSON line: {raw_line}")
+            continue  
 
         try:
             data = json.loads(line)
@@ -53,7 +55,7 @@ try:
                 mqtt_client.publish(topic, json.dumps(data))
                 log_reading(data)
                 logging.info(f"[Main] Published to {topic}: {data}")
-            else:
+            elif model and not model in EXCLUDED_MODELS:
                 suspicious_logger.info(f"[Main] Unknown or unhandled model: {line}")
 
         except json.JSONDecodeError:
